@@ -76,10 +76,6 @@
 
     <!-- JavaScript -->
     <script>
-        const SHEET_ID = '1sHkGpY9Rpb5JUHC01yTvW48Bhat5Ae3X1b6bCXstBYs'; // Replace with your Google Sheet ID
-        const API_KEY = 'AIzaSyBKv_WtgdBVdhtjxoZyiMJPrYBTNqUbDsM'; // Replace with your Google Sheets API Key
-        const RANGE = 'Sheet1!A1:F1'; // Adjust to match your Google Sheet
-
         document.getElementById('voucherForm').addEventListener('submit', async function (e) {
             e.preventDefault();
 
@@ -88,71 +84,60 @@
             const voucher = Object.fromEntries(formData.entries());
 
             try {
-                // Append data to Google Sheets
-                const response = await fetch(
-                    `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${RANGE}:append?valueInputOption=RAW&key=${API_KEY}`,
-                    {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ values: [[
-                            voucher.orderNo,
-                            voucher.companyName,
-                            voucher.vehicleReg,
-                            voucher.odometerReading,
-                            voucher.litresSupplied,
-                            voucher.date
-                        ]] }),
-                    }
-                );
+                // Send data to the Netlify function
+                const response = await fetch('/.netlify/functions/store-data', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(voucher),
+                });
 
-                if (!response.ok) {
-                    throw new Error('Failed to save data to Google Sheets');
+                const result = await response.json();
+                if (response.ok) {
+                    alert('Voucher added successfully!');
+
+                    // Add data to the table dynamically
+                    const tableBody = document.getElementById('voucherTable').querySelector('tbody');
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${voucher.orderNo}</td>
+                        <td>${voucher.companyName}</td>
+                        <td>${voucher.vehicleReg}</td>
+                        <td>${voucher.odometerReading}</td>
+                        <td>${voucher.litresSupplied}</td>
+                        <td>${voucher.date}</td>
+                        <td><button class="btn btn-danger btn-sm" onclick="deleteRow(this)">Delete</button></td>
+                    `;
+                    tableBody.appendChild(row);
+
+                    this.reset();
+                } else {
+                    alert('Failed to add voucher: ' + (result.error || 'Unknown error'));
                 }
-
-                alert('Voucher added successfully!');
-
-                // Add data to the table
-                const tableBody = document.getElementById('voucherTable').querySelector('tbody');
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${voucher.orderNo}</td>
-                    <td>${voucher.companyName}</td>
-                    <td>${voucher.vehicleReg}</td>
-                    <td>${voucher.odometerReading}</td>
-                    <td>${voucher.litresSupplied}</td>
-                    <td>${voucher.date}</td>
-                    <td><button class="btn btn-danger btn-sm" onclick="deleteRow(this)">Delete</button></td>
-                `;
-                tableBody.appendChild(row);
-
-                this.reset();
             } catch (error) {
                 console.error('Error:', error);
                 alert('An error occurred while adding the voucher.');
             }
         });
 
-        // Load data from Google Sheets on page load
+        // Load data from the backend on page load
         async function loadVouchers() {
             try {
-                const response = await fetch(
-                    `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Sheet1?key=${API_KEY}`
-                );
-                const data = await response.json();
+                const response = await fetch('/.netlify/functions/get-data');
+                const vouchers = await response.json();
 
                 const tableBody = document.getElementById('voucherTable').querySelector('tbody');
-                (data.values || []).forEach(row => {
-                    const rowElement = document.createElement('tr');
-                    rowElement.innerHTML = `
-                        <td>${row[0]}</td>
-                        <td>${row[1]}</td>
-                        <td>${row[2]}</td>
-                        <td>${row[3]}</td>
-                        <td>${row[4]}</td>
-                        <td>${row[5]}</td>
+                vouchers.forEach(voucher => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${voucher.orderNo}</td>
+                        <td>${voucher.companyName}</td>
+                        <td>${voucher.vehicleReg}</td>
+                        <td>${voucher.odometerReading}</td>
+                        <td>${voucher.litresSupplied}</td>
+                        <td>${voucher.date}</td>
                         <td><button class="btn btn-danger btn-sm" onclick="deleteRow(this)">Delete</button></td>
                     `;
-                    tableBody.appendChild(rowElement);
+                    tableBody.appendChild(row);
                 });
             } catch (error) {
                 console.error('Error loading vouchers:', error);
