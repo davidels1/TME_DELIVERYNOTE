@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html data-bs-theme="dark" lang="en" data-bss-forced-theme="dark">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <title>Diesel &amp; Petrol Voucher Management</title>
+    <link rel="icon" type="image/png" sizes="48x48" href="assets/img/6771604_chemical_chemistry_education_learning_school_icon.png?h=4d32c82002560c18632a52491d09a16f">
+    <link rel="icon" type="image/png" sizes="48x48" href="assets/img/6771604_chemical_chemistry_education_learning_school_icon.png?h=4d32c82002560c18632a52491d09a16f">
+    <link rel="stylesheet" href="assets/bootstrap/css/bootstrap.min.css?h=39f612d0af5b74e3058ab6d89e114e6a">
+    <link rel="manifest" href="manifest.json?h=843cd40fd7039571ba984ba08a8928ae" crossorigin="use-credentials">
+    <link rel="stylesheet" href="assets/css/Font%20Awesome%205%20Brands.css?h=a0d5acc691fb7eff4f239554ef0e4dae">
+    <link rel="stylesheet" href="assets/css/Font%20Awesome%205%20Free.css?h=a0d5acc691fb7eff4f239554ef0e4dae">
+    <link rel="stylesheet" href="assets/css/Nunito.css?h=68b07360a71d8e17544f836967ed87e3">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="assets/css/fontawesome-all.min.css?h=bbdee5d1310a5050ebf21bd0dbac12c6">
+</head>
+
+<body id="page-top">
+    <div id="wrapper">
+        <div id="content-wrapper">
+            <div id="content">
+                <nav class="navbar navbar-expand bg-white shadow mb-4 topbar">
+                    <div class="container-fluid">
+                        <h1 class="h3 mb-0 text-gray-800">Diesel &amp; Petrol Voucher Management</h1>
+                    </div>
+                </nav>
+                <div class="container mt-5">
+                    <h2>Voucher Entry</h2>
+                    <form id="voucherForm">
+                        <div class="mb-3"><label class="form-label" for="orderNo">Order No</label><input class="form-control form-control" type="text" id="orderNo" name="orderNo" required=""></div>
+                        <div class="mb-3"><label class="form-label" for="companyName">Company/Plant Name</label><input class="form-control form-control" type="text" id="companyName" name="companyName" required=""></div>
+                        <div class="mb-3"><label class="form-label" for="vehicleReg">Vehicle Registration No</label><input class="form-control form-control" type="text" id="vehicleReg" name="vehicleReg" required=""></div>
+                        <div class="mb-3"><label class="form-label" for="odometerReading">Opening Odometer Reading</label><input class="form-control form-control" type="number" id="odometerReading" name="odometerReading" required=""></div>
+                        <div class="mb-3"><label class="form-label" for="litresSupplied">Quantity Litres Supplied</label><input class="form-control form-control" type="number" id="litresSupplied" name="litresSupplied" required=""></div>
+                        <div class="mb-3"><label class="form-label" for="date">Date</label><input class="form-control form-control" type="date" id="date" name="date" required=""></div><button class="btn btn-primary" type="submit">Add Voucher</button>
+                    </form>
+                </div>
+                <div class="container mt-5">
+                    <h2>Voucher Records</h2>
+                    <div>
+                        <table class="table table-striped" id="voucherTable">
+                            <thead>
+                                <tr>
+                                    <th>Order No</th>
+                                    <th>Company/Plant Name</th>
+                                    <th>Vehicle Registration No</th>
+                                    <th>Opening Odometer</th>
+                                    <th>Quantity Litres</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div><script>
+        document.getElementById('voucherForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            // Get form data
+            const formData = new FormData(this);
+            const voucher = Object.fromEntries(formData.entries());
+
+            // Send data to Netlify function
+            try {
+                const response = await fetch('/.netlify/functions/store-data', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(voucher),
+                });
+
+                const result = await response.json();
+                if (response.ok) {
+                    alert('Voucher added successfully!');
+
+                    // Add data to the table
+                    const tableBody = document.getElementById('voucherTable').querySelector('tbody');
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${voucher.orderNo}</td>
+                        <td>${voucher.companyName}</td>
+                        <td>${voucher.vehicleReg}</td>
+                        <td>${voucher.odometerReading}</td>
+                        <td>${voucher.litresSupplied}</td>
+                        <td>${voucher.date}</td>
+                        <td><button class="btn btn-danger btn-sm" onclick="deleteRow(this)">Delete</button></td>
+                    `;
+                    tableBody.appendChild(row);
+
+                    // Reset the form
+                    this.reset();
+                } else {
+                    alert('Failed to add voucher: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred while adding the voucher.');
+            }
+        });
+
+        // Delete row function
+        function deleteRow(button) {
+            const row = button.parentElement.parentElement;
+            row.remove();
+        }
+    </script>
+    <script src="assets/bootstrap/js/bootstrap.min.js?h=374d178d651fa0eaf680a1fa7b40c788"></script>
+    <script src="assets/js/bs-init.js?h=e2b0d57f2c4a9b0d13919304f87f79ae"></script>
+    <script src="assets/js/theme.js?h=79f403485707cf2617c5bc5a2d386bb0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/Functions/store-data.js?h=324fdb852759a42f980c6b1f2db7af71"></script>
+</body>
+
+</html>
